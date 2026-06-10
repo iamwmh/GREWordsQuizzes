@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
+    <entity name="GREWord" representedClassName="GREWord" syncable="YES" codeGenerationType="class">
+        <attribute name="addedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="characteristic" optional="YES" attributeType="String"/>
+        <attribute name="definition" optional="YES" attributeType="String"/>
+        <attribute name="hint1" optional="YES" attributeType="String"/>
+        <attribute name="hint2" optional="YES" attributeType="String"/>
+        <attribute name="hint3" optional="YES" attributeType="String"/>
+        <attribute name="frequencyRank" optional="YES" attributeType="Integer 32" defaultValueString="9999999" usesScalarValueType="YES"/>
+        <attribute name="highFrequency" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="hintsGenerated" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="lastReviewed" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="partOfSpeech" optional="YES" attributeType="String"/>
+        <attribute name="priority" optional="YES" attributeType="Integer 16" defaultValueString="3" usesScalarValueType="YES"/>
+        <attribute name="synonyms" optional="YES" attributeType="String"/>
+        <attribute name="antonyms" optional="YES" attributeType="String"/>
+        <attribute name="timesCorrect" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="timesSeen" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="word" optional="YES" attributeType="String"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="word"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="DailyProgress" representedClassName="DailyProgress" syncable="YES" codeGenerationType="class">
+        <attribute name="correctCount" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="goal" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="studiedCount" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="date"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+</model>

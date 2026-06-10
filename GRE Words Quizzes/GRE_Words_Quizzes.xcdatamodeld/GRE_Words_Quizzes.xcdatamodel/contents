@@ -11,6 +11,9 @@
         <attribute name="highFrequency" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="hintsGenerated" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="lastReviewed" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="learnedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="nextReviewDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="reviewStage" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="partOfSpeech" optional="YES" attributeType="String"/>
         <attribute name="priority" optional="YES" attributeType="Integer 16" defaultValueString="3" usesScalarValueType="YES"/>
         <attribute name="synonyms" optional="YES" attributeType="String"/>

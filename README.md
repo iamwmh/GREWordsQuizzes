@@ -28,6 +28,10 @@ recall the way memory really works.
   are flagged and **practiced first**, with a mastery tracker in the Progress tab.
 - **12,000-word local bank** with definitions, fully searchable and filterable by
   high-frequency; add your own words.
+- **Spaced-repetition review** — every practiced word is scheduled on the **Ebbinghaus
+  forgetting curve** (1, 2, 4, 7, 15, 30, 60, 120-day intervals). The Review tab randomly
+  resurfaces the words that are due each day and keeps a day-by-day list of everything
+  you've studied. Misses shorten the interval; correct recalls lengthen it.
 - **Daily goals & calendar tracking** — plan a daily word count (default 15) and grow
   your streak on a color-coded calendar.
 - **Private by design** — no accounts, no ads, no third-party tracking; data stays on device.

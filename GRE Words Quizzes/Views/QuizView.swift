@@ -27,8 +27,7 @@ struct QuizView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 statusHeader
-                wordCard
-                transcriptList
+                QuizSessionView(engine: engine)
                 controlBar
             }
             .background(Color(.systemGroupedBackground))
@@ -42,9 +41,23 @@ struct QuizView: View {
         }
         .onAppear {
             if !engine.isSessionActive {
-                sessionSize = max(1, remainingToday > 0 ? remainingToday : dailyGoal)
+                sessionSize = suggestedSessionSize
             }
         }
+        .onChange(of: engine.isSessionActive) { _, active in
+            // When a session ends (Stop or finished), resize the next session to
+            // the words still remaining for today so totals don't overshoot the
+            // daily goal.
+            if !active {
+                sessionSize = suggestedSessionSize
+            }
+        }
+    }
+
+    /// Default size for the next session: whatever is left of today's goal, or a
+    /// fresh full goal once today's target has already been met.
+    private var suggestedSessionSize: Int {
+        max(1, remainingToday > 0 ? remainingToday : dailyGoal)
     }
 
     private var studiedToday: Int {
@@ -100,109 +113,6 @@ struct QuizView: View {
         }
     }
 
-    // MARK: - Word card
-
-    private var wordCard: some View {
-        VStack(spacing: 14) {
-            Text(phaseLabel)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(phaseColor)
-                .textCase(.uppercase)
-
-            Text(engine.revealedWord ?? (engine.maskedWord.isEmpty ? "GRE" : engine.maskedWord))
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(engine.revealedWord == nil ? Color.primary : Color.green)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .contentTransition(.opacity)
-
-            hintDots
-
-            ZStack {
-                if engine.phase == .listening {
-                    listeningIndicator
-                } else if !engine.livePartial.isEmpty {
-                    Text("“\(engine.livePartial)”")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(engine.statusText)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(height: 28)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 22)
-        .background(.background, in: RoundedRectangle(cornerRadius: 20))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(phaseColor.opacity(0.4), lineWidth: engine.phase == .listening ? 2 : 0)
-        )
-        .padding()
-        .animation(.easeInOut(duration: 0.25), value: engine.phase)
-    }
-
-    private var hintDots: some View {
-        HStack(spacing: 10) {
-            ForEach(0..<3, id: \.self) { index in
-                Circle()
-                    .fill(index < engine.hintsRevealedCount ? phaseColor : Color(.systemGray4))
-                    .frame(width: 10, height: 10)
-            }
-        }
-    }
-
-    private var listeningIndicator: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "mic.fill")
-                .foregroundStyle(.red)
-                .symbolEffect(.pulse, options: .repeating)
-            Text(engine.livePartial.isEmpty ? "Listening…" : "“\(engine.livePartial)”")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-        }
-    }
-
-    // MARK: - Transcript
-
-    private var transcriptList: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 10) {
-                    if engine.transcript.isEmpty {
-                        emptyState
-                    }
-                    ForEach(engine.transcript) { entry in
-                        TranscriptBubble(entry: entry).id(entry.id)
-                    }
-                    Color.clear.frame(height: 1).id("bottom")
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-            }
-            .onChange(of: engine.transcript.count) {
-                withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
-            }
-        }
-    }
-
-    private var emptyState: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "waveform.and.mic")
-                .font(.largeTitle)
-                .foregroundStyle(.secondary)
-            Text("Listen to the spoken clues, wait for the beeps, then say the word out loud.")
-                .font(.subheadline)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 40)
-    }
-
     // MARK: - Controls
 
     private var controlBar: some View {
@@ -245,71 +155,6 @@ struct QuizView: View {
                                             count: sessionSize,
                                             focusHighFrequency: focusHighFrequency)
         engine.startSession(words: chosen)
-    }
-
-    private var phaseLabel: String {
-        switch engine.phase {
-        case .idle: return "Ready"
-        case .speaking: return "Giving a clue"
-        case .listening: return "Your turn"
-        case .evaluating: return "Checking"
-        case .revealing: return "Answer"
-        case .finished: return "Finished"
-        }
-    }
-
-    private var phaseColor: Color {
-        switch engine.phase {
-        case .listening: return .red
-        case .speaking: return .blue
-        case .revealing, .finished: return .green
-        default: return .accentColor
-        }
-    }
-}
-
-private struct TranscriptBubble: View {
-    let entry: TranscriptEntry
-
-    var body: some View {
-        HStack {
-            if entry.role == .user { Spacer(minLength: 40) }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(roleTitle)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(roleColor)
-                Text(entry.text)
-                    .font(.callout)
-                    .foregroundStyle(entry.role == .system ? .secondary : .primary)
-            }
-            .padding(10)
-            .background(bubbleColor, in: RoundedRectangle(cornerRadius: 14))
-            if entry.role != .user { Spacer(minLength: 40) }
-        }
-    }
-
-    private var roleTitle: String {
-        switch entry.role {
-        case .app: return "App"
-        case .user: return "You"
-        case .system: return "Status"
-        }
-    }
-
-    private var roleColor: Color {
-        switch entry.role {
-        case .app: return .blue
-        case .user: return .green
-        case .system: return .secondary
-        }
-    }
-
-    private var bubbleColor: Color {
-        switch entry.role {
-        case .app: return Color.blue.opacity(0.12)
-        case .user: return Color.green.opacity(0.15)
-        case .system: return Color(.systemGray5).opacity(0.6)
-        }
     }
 }
 

@@ -45,21 +45,24 @@ struct Hint: Equatable, Identifiable {
 struct GeneratedHints: Equatable {
     var definitionHint: String
     var spellingHint: String
-    var characteristicHint: String
+    /// A distinct characteristic clue. `nil` when the word has no real
+    /// characteristic of its own (we never fabricate one from the definition,
+    /// which would just duplicate the definition hint).
+    var characteristicHint: String?
     var synonymHint: String?
     var antonymHint: String?
 
-    var asArray: [String] { [definitionHint, spellingHint, characteristicHint] }
+    var asArray: [String] { [definitionHint, spellingHint, characteristicHint].compactMap { $0 } }
 
     /// Every available typed clue for this word.
     var allHints: [Hint] {
-        var hints: [Hint] = [
-            Hint(kind: .definition, text: definitionHint),
-            Hint(kind: .characteristic, text: characteristicHint),
-            Hint(kind: .spelling, text: spellingHint),
-        ]
+        var hints: [Hint] = [Hint(kind: .definition, text: definitionHint)]
+        if let characteristicHint, !characteristicHint.isEmpty {
+            hints.append(Hint(kind: .characteristic, text: characteristicHint))
+        }
         if let synonymHint { hints.append(Hint(kind: .synonym, text: synonymHint)) }
         if let antonymHint { hints.append(Hint(kind: .antonym, text: antonymHint)) }
+        hints.append(Hint(kind: .spelling, text: spellingHint))
         return hints
     }
 }
@@ -124,24 +127,21 @@ final class HintGenerator {
         let antonymHint = Self.antonymHint(from: word.antonyms, word: target)
 
         // Use cached hints when we already produced them.
-        if word.hintsGenerated,
-           let h1 = word.hint1, !h1.isEmpty,
-           let h3 = word.hint3, !h3.isEmpty {
+        if word.hintsGenerated, let h1 = word.hint1, !h1.isEmpty {
             return GeneratedHints(definitionHint: h1,
                                   spellingHint: word.hint2?.isEmpty == false ? word.hint2! : spelling,
-                                  characteristicHint: h3,
+                                  characteristicHint: word.hint3?.isEmpty == false ? word.hint3 : nil,
                                   synonymHint: synonymHint,
                                   antonymHint: antonymHint)
         }
 
         let definition = word.definition ?? "This word's meaning is described here."
+        // Only use a real, distinct characteristic — never the definition itself.
         let storedCharacteristic = (word.characteristic?.isEmpty == false) ? word.characteristic : nil
-        let fallbackCharacteristic = storedCharacteristic
-            ?? "Picture a situation where this fits: \(definition)"
         let fallback = GeneratedHints(
             definitionHint: definition,
             spellingHint: spelling,
-            characteristicHint: fallbackCharacteristic,
+            characteristicHint: storedCharacteristic,
             synonymHint: synonymHint,
             antonymHint: antonymHint
         )

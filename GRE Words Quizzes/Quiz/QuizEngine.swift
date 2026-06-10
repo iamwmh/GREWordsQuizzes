@@ -199,7 +199,8 @@ final class QuizEngine {
             await narrator.speak("The correct answer is \(answer). \(Self.spellOut(answer)). It means: \(def)")
         }
 
-        word.lastReviewed = Date()
+        // Update the Ebbinghaus review schedule for this word.
+        ReviewScheduler.schedule(word: word, correct: solved)
         try? context.save()
 
         // Track the word against today's study goal/calendar.
@@ -330,10 +331,12 @@ final class QuizEngine {
     /// so the synonym/antonym type appears in some rounds and not others, in a
     /// random position. The spelling clue is always given last as a final nudge.
     static func roundHints(from generated: GeneratedHints) -> [Hint] {
-        var meaning: [Hint] = [
-            Hint(kind: .definition, text: generated.definitionHint),
-            Hint(kind: .characteristic, text: generated.characteristicHint),
-        ]
+        var meaning: [Hint] = [Hint(kind: .definition, text: generated.definitionHint)]
+
+        // Only add a characteristic clue if it's genuinely distinct.
+        if let c = generated.characteristicHint, !c.isEmpty {
+            meaning.append(Hint(kind: .characteristic, text: c))
+        }
 
         // Mix in at most one relation clue per round (synonym OR antonym).
         var relations: [Hint] = []
@@ -344,9 +347,39 @@ final class QuizEngine {
         }
 
         meaning.shuffle()
-        var sequence = Array(meaning.prefix(2))
-        sequence.append(Hint(kind: .spelling, text: generated.spellingHint))
-        return sequence
+
+        // Pick up to two meaning clues, skipping any that duplicate the content
+        // of one already chosen, so two hints never repeat each other.
+        var picked: [Hint] = []
+        for hint in meaning {
+            if picked.count == 2 { break }
+            if picked.contains(where: { Self.hintsOverlap($0.text, hint.text) }) { continue }
+            picked.append(hint)
+        }
+        if picked.isEmpty {
+            picked = [Hint(kind: .definition, text: generated.definitionHint)]
+        }
+
+        picked.append(Hint(kind: .spelling, text: generated.spellingHint))
+        return picked
+    }
+
+    /// Whether two clue texts say essentially the same thing (one contains the
+    /// other, or they share most of their words), so we avoid repeating content.
+    static func hintsOverlap(_ a: String, _ b: String) -> Bool {
+        let na = normalizedClue(a), nb = normalizedClue(b)
+        guard !na.isEmpty, !nb.isEmpty else { return false }
+        if na.contains(nb) || nb.contains(na) { return true }
+        let ta = Set(na.split(separator: " ")), tb = Set(nb.split(separator: " "))
+        guard !ta.isEmpty, !tb.isEmpty else { return false }
+        let shared = ta.intersection(tb).count
+        return Double(shared) / Double(Swift.min(ta.count, tb.count)) >= 0.7
+    }
+
+    private static func normalizedClue(_ text: String) -> String {
+        let lowered = text.lowercased()
+        let kept = lowered.unicodeScalars.map { CharacterSet.lowercaseLetters.contains($0) || $0 == " " ? Character($0) : " " }
+        return String(kept).split(separator: " ").joined(separator: " ")
     }
 
     static func mask(_ word: String) -> String {

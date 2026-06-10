@@ -95,7 +95,7 @@ struct WordListView: View {
     }
 }
 
-private struct WordRow: View {
+struct WordRow: View {
     @ObservedObject var word: GREWord
 
     var body: some View {
@@ -207,8 +207,13 @@ struct WordDetailView: View {
                 if let last = word.lastReviewed {
                     LabeledContent("Last reviewed", value: last.formatted(date: .abbreviated, time: .shortened))
                 }
+                if let next = ReviewScheduler.nextReviewDescription(for: word) {
+                    Label(next, systemImage: "brain.head.profile")
+                        .font(.subheadline)
+                        .foregroundStyle(.purple)
+                }
             } header: {
-                Text("Progress")
+                Text("Progress & review")
             }
         }
         .navigationTitle(word.word ?? "Word")

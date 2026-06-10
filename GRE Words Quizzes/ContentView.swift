@@ -19,13 +19,18 @@ struct ContentView: View {
                 .tabItem {
                     Label("Practice", systemImage: "waveform.and.mic")
                 }
-            ProgressDashboardView()
+            ReviewView()
                 .tag(1)
+                .tabItem {
+                    Label("Review", systemImage: "brain.head.profile")
+                }
+            ProgressDashboardView()
+                .tag(2)
                 .tabItem {
                     Label("Progress", systemImage: "calendar")
                 }
             WordListView()
-                .tag(2)
+                .tag(3)
                 .tabItem {
                     Label("Word Bank", systemImage: "character.book.closed")
                 }
